@@ -61,19 +61,21 @@ adj([right | L],L,Entity, [right(Entity)|C],C).
 
 noun([party | L],L,Entity, [party(Entity)|C],C).
 noun([leader | L], L, Entity, [leader(Entity) |C], C).
-
+noun([policy | L], L, Entity, [policy(Entity) |C], C).
 
 % Parties are proper nouns.
 % We could either have it check a language dictionary or add the constraints. We chose to check the dictionary.
 proper_noun([X | L],L,X,C,C) :- party(X).
+proper_noun([X | L],L,X,C,C) :- policy(X).
 
-reln([the,leader, of| L],L,O1,O2,[leaderOf(O2,O1)|C],C).
-
-
-
+reln([the,leader,of| L],L,O1,O2,[leaderOf(O2,O1)|C],C).
+reln([supports | L],L,O1,O2,[supports(O2,O1)|C],C).
 
 
 % question(Question,QR,Entity) is true if Query provides an answer about Entity to Question
+question(['Does' | L0],L2,Entity,C0,C2) :-
+    noun_phrase(L0,L1,Entity,C0,C1),
+    mp(L1,L2,Entity,C1,C2).
 question(['Is' | L0],L2,Entity,C0,C2) :-
     noun_phrase(L0,L1,Entity,C0,C1),
     mp(L1,L2,Entity,C1,C2).
@@ -109,9 +111,6 @@ prove_all([H|T]) :-
     call(H),      % built-in Prolog predicate calls an atom
     prove_all(T).
 
-
-%  The Database of Facts to be Queried
-
 %  The Database of Facts to be Queried
 
 % party(P) is true if P is a party.
@@ -120,11 +119,10 @@ party(conservatives).
 party(ndp).
 party(greens).
 party(bq).
+party(rhinoceros).
 
 % leader(L) is true if L is a leader.
 leader(X) :- leaderOf(P,X), party(P).
-
-
 
 % left(X) is true if X is more politically left aligned.
 left(ndp).
@@ -133,11 +131,11 @@ left(X) :- leaderOf(P,X), left(P).
 
 % center(X) is true if X is more politically center aligned.
 center(liberals).
+center(bq).
 center(X) :- leaderOf(X,P),  center(P).
 
 % right(X) is true if X is more politically right aligned.
 right(conservatives).
-right(bq).
 right(X) :- leaderOf(X,P), right(P).
 
 % leaderOf(P,L) is true if L is the leader of party P.
@@ -146,6 +144,49 @@ leaderOf(conservatives, scheer).
 leaderOf(ndp, singh).
 leaderOf(greens, may).
 leaderOf(bq, blanchet).
+
+% policy(P) is true if P is a policy that a party could support or oppose
+policy('deregulation').
+policy('pharmacare').
+policy('tax cuts').
+policy('carbon tax').
+policy('wealth tax').
+policy('bike lanes').
+policy('foreign military intervention').
+policy('unions').
+policy(abortion).
+policy('repealing the law of gravity').
+policy('quebec nationalism').
+
+% supported-by(P1,P2) is true if P1 is a policy that is supported by P2
+supports('deregulation',conservatives).
+supports('deregulation',liberals).
+supports('pharmacare',ndp).
+supports('pharmacare',greens).
+supports('tax cuts',conservatives).
+supports('tax cuts',liberals).
+supports('tax cuts',ndp).
+supports('tax cuts',greens).
+supports('tax cuts',bq).
+supports('carbon tax',liberals).
+supports('carbon tax',greens).
+supports('carbon tax',ndp).
+supports('carbon tax',bq).
+supports('wealth tax',ndp).
+supports('bike lanes',liberals).
+supports('bike lanes',greens).
+supports('bike lanes',ndp).
+supports('bike lanes',bq).
+supports('foreign military intervention',conservatives).
+supports('foreign military intervention',liberals).
+supports('unions',ndp).
+supports('abortion',liberals).
+supports('abortion',greens).
+supports('abortion',ndp).
+supports('abortion',bq).
+supports('quebec nationalism',bq).
+supports('repealing the law of gravity',rhinoceros).
+
 
 q(Ans) :-
     write("Ask me: "), flush_output(current_output),
@@ -158,5 +199,6 @@ ask(['What',is,a,right,party],A).
 ask(['Who',is,a,leader],A).
 ask(['Who',is,the,leader,of,a,left,party],A).
 ask(['Who',is,the,leader,of,liberals],A).
+ask(['What',is,a,party,that,supports,'pharmacare'],A).
 
 */
