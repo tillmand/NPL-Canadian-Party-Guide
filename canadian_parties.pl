@@ -26,6 +26,11 @@ noun_phrase(L0,L4,Entity,C0,C4) :-
 noun_phrase(L0,L4,Entity,C0,C4) :-
     proper_noun(L0,L4,Entity,C0,C4).
 
+% Try:
+%?- noun_phrase([a,spanish,speaking,country],L1,E1,C0,C1).
+%?- noun_phrase([a,country,that,borders,chile],L1,E1,C0,C1).
+%?- noun_phrase([a,spanish,speaking,country,that,borders,chile],L1,E1,C0,C1).
+
 % Determiners (articles) are ignored in this oversimplified example.
 % They do not provide any extra constraints.
 det([the | L],L,_,C,C).
@@ -52,17 +57,58 @@ mp([that|L0],L2,Subject,C0,C2) :-
     noun_phrase(L1,L2,Object,C1,C2).
 mp(L,L,_,C,C).
 
-
-
 % DICTIONARY
 % adj(L0,L1,Entity,C0,C1) is true if L0-L1
 % is an adjective that imposes constraints C0-C1 Entity
-adj([left | L], L, Entity, [large(Entity)|C],C).
-adj([right | L],L,Entity, [large(Entity)|C],C).
-adj([center | L],L,Entity, [large(Entity)|C],C).
+adj([left | L],L,Entity, [left(Entity)|C],C).
+adj([center | L],L,Entity, [center(Entity)|C],C).
+adj([right | L],L,Entity, [right(Entity)|C],C).
 
-noun([party | L], L, Entity, [party(Entity) |C], C).
+noun([party | L],L,Entity, [party(Entity)|C],C).
+noun([leader | L], L, Entity, [leader(Entity) |C], C).
 
+% Parties are proper nouns.
+% We could either have it check a language dictionary or add the constraints. We chose to check the dictionary.
+
+proper_noun([X | L],L,X,C,C) :- leader(X).
+
+
+
+% question(Question,QR,Entity) is true if Query provides an answer about Entity to Question
+question(['Is' | L0],L2,Entity,C0,C2) :-
+    noun_phrase(L0,L1,Entity,C0,C1),
+    mp(L1,L2,Entity,C1,C2).
+question(['What',is | L0], L1, Entity,C0,C1) :-
+    mp(L0,L1,Entity,C0,C1).
+question(['What',is | L0],L1,Entity,C0,C1) :-
+    noun_phrase(L0,L1,Entity,C0,C1).
+question(['What' | L0],L2,Entity,C0,C2) :-
+    noun_phrase(L0,L1,Entity,C0,C1),
+    mp(L1,L2,Entity,C1,C2).
+question(['Who', is |L0], L1,Entity,C0,C1) :-
+    noun_phrase(L0,L1,Entity,C0,C1).
+
+% ask(Q,A) gives answer A to question Q
+ask(Q,A) :-
+    get_constraints_from_question(Q,A,C),
+    prove_all(C).
+
+% get_constraints_from_question(Q,A,C) is true if C is the constaints on A to infer question Q
+get_constraints_from_question(Q,A,C) :-
+    question(Q,End,A,C,[]),
+    member(End,[[],['?'],['.']]).
+
+
+% prove_all(L) is true if all elements of L can be proved from the knowledge base
+prove_all([]).
+prove_all([H|T]) :-
+    call(H),      % built-in Prolog predicate calls an atom
+    prove_all(T).
+
+
+%  The Database of Facts to be Queried
+
+reln([leader, of | L],L,O1,O2,[leaderOf(O1,O2)|C],C).
 
 %  The Database of Facts to be Queried
 
@@ -72,6 +118,13 @@ party(conservatives).
 party(ndp).
 party(greens).
 party(bq).
+
+% leader(L) is true if L is a leader.
+leader(trudeau).
+leader(scheer).
+leader(singh).
+leader(may).
+leader(blanchet).
 
 % left(P) is true if party P is more politically left aligned.
 left(ndp).
@@ -84,9 +137,14 @@ center(liberals).
 right(conservatives).
 right(bq).
 
-% leader(L,P) is true if L is the leader of party P.
-leader(justin, liberals).
-leader(scheer, conservatives).
-leader(singh, ndp).
-leader(may, greens).
-leader(blanchet, bq).
+% leaderOf(P,L) is true if L is the leader of party P.
+leaderOf(liberals, trudeau).
+leaderOf(conservatives, scheer).
+leaderOf(ndp, singh).
+leaderOf(greens, may).
+leaderOf(bq, blanchet).
+
+/* Try the following queries:
+ask(['What',is,a,right,party],A).
+ask(['Who',is,a,leader],A).
+*/
