@@ -60,14 +60,15 @@ adj([center | L],L,Entity, [center(Entity)|C],C).
 adj([right | L],L,Entity, [right(Entity)|C],C).
 
 noun([party | L],L,Entity, [party(Entity)|C],C).
-% noun([leader | L], L, Entity, [leader(Entity) |C], C).
-noun([opposition | L], L, Entity, [opposition(Entity) |C], C).
+noun([leader | L], L, Entity, [leader(Entity) |C], C).
+
 
 % Parties are proper nouns.
 % We could either have it check a language dictionary or add the constraints. We chose to check the dictionary.
-proper_noun([X | L],L,X,C,C) :- opposition(X).
+proper_noun([X | L],L,X,C,C) :- party(X).
 
 reln([the,leader, of| L],L,O1,O2,[leaderOf(O2,O1)|C],C).
+
 
 
 
@@ -123,18 +124,21 @@ party(bq).
 % leader(L) is true if L is a leader.
 leader(X) :- leaderOf(P,X), party(P).
 
-opposition(scheer).
 
-% left(P) is true if party P is more politically left aligned.
+
+% left(X) is true if X is more politically left aligned.
 left(ndp).
 left(greens).
+left(X) :- leaderOf(P,X), left(P).
 
-% center(P) is true if party P is more politically center aligned.
+% center(X) is true if X is more politically center aligned.
 center(liberals).
+center(X) :- leaderOf(X,P),  center(P).
 
-% right(P) is true if party P is more politically right aligned.
+% right(X) is true if X is more politically right aligned.
 right(conservatives).
 right(bq).
+right(X) :- leaderOf(X,P), right(P).
 
 % leaderOf(P,L) is true if L is the leader of party P.
 leaderOf(liberals, trudeau).
@@ -142,9 +146,17 @@ leaderOf(conservatives, scheer).
 leaderOf(ndp, singh).
 leaderOf(greens, may).
 leaderOf(bq, blanchet).
-leaderOf(opposition, scheer).
+
+q(Ans) :-
+    write("Ask me: "), flush_output(current_output),
+    readln(Ln),
+    ask(Ln,Ans).
+
 
 /* Try the following queries:
 ask(['What',is,a,right,party],A).
 ask(['Who',is,a,leader],A).
+ask(['Who',is,the,leader,of,a,left,party],A).
+ask(['Who',is,the,leader,of,liberals],A).
+
 */
