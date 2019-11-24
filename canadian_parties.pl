@@ -26,11 +26,6 @@ noun_phrase(L0,L4,Entity,C0,C4) :-
 noun_phrase(L0,L4,Entity,C0,C4) :-
     proper_noun(L0,L4,Entity,C0,C4).
 
-% Try:
-%?- noun_phrase([a,spanish,speaking,country],L1,E1,C0,C1).
-%?- noun_phrase([a,country,that,borders,chile],L1,E1,C0,C1).
-%?- noun_phrase([a,spanish,speaking,country,that,borders,chile],L1,E1,C0,C1).
-
 % Determiners (articles) are ignored in this oversimplified example.
 % They do not provide any extra constraints.
 det([the | L],L,_,C,C).
@@ -65,12 +60,15 @@ adj([center | L],L,Entity, [center(Entity)|C],C).
 adj([right | L],L,Entity, [right(Entity)|C],C).
 
 noun([party | L],L,Entity, [party(Entity)|C],C).
-noun([leader | L], L, Entity, [leader(Entity) |C], C).
+% noun([leader | L], L, Entity, [leader(Entity) |C], C).
+noun([opposition | L], L, Entity, [opposition(Entity) |C], C).
 
 % Parties are proper nouns.
 % We could either have it check a language dictionary or add the constraints. We chose to check the dictionary.
+proper_noun([X | L],L,X,C,C) :- opposition(X).
 
-proper_noun([X | L],L,X,C,C) :- leader(X).
+reln([the,leader, of| L],L,O1,O2,[leaderOf(O2,O1)|C],C).
+
 
 
 
@@ -87,6 +85,11 @@ question(['What' | L0],L2,Entity,C0,C2) :-
     mp(L1,L2,Entity,C1,C2).
 question(['Who', is |L0], L1,Entity,C0,C1) :-
     noun_phrase(L0,L1,Entity,C0,C1).
+question(['Who', is |L0], L1,Entity,C0,C1) :-
+        mp(L0,L1,Entity,C0,C1).
+question(['Who' | L0],L2,Entity,C0,C2) :-
+        noun_phrase(L0,L1,Entity,C0,C1),
+        mp(L1,L2,Entity,C1,C2).
 
 % ask(Q,A) gives answer A to question Q
 ask(Q,A) :-
@@ -108,8 +111,6 @@ prove_all([H|T]) :-
 
 %  The Database of Facts to be Queried
 
-reln([leader, of | L],L,O1,O2,[leaderOf(O1,O2)|C],C).
-
 %  The Database of Facts to be Queried
 
 % party(P) is true if P is a party.
@@ -120,11 +121,9 @@ party(greens).
 party(bq).
 
 % leader(L) is true if L is a leader.
-leader(trudeau).
-leader(scheer).
-leader(singh).
-leader(may).
-leader(blanchet).
+leader(X) :- leaderOf(P,X), party(P).
+
+opposition(scheer).
 
 % left(P) is true if party P is more politically left aligned.
 left(ndp).
@@ -143,6 +142,7 @@ leaderOf(conservatives, scheer).
 leaderOf(ndp, singh).
 leaderOf(greens, may).
 leaderOf(bq, blanchet).
+leaderOf(opposition, scheer).
 
 /* Try the following queries:
 ask(['What',is,a,right,party],A).
